@@ -1,5 +1,8 @@
 Toxic Comment Classification - Usage
 
+Image pml.sif to be obtained from: https://drive.google.com/drive/folders/1bn9pdTxk2Ni_SX4jSMwuC5oHJwEyrIGT
+(exceed GitHub maximum size)
+
 To run program use: sbatch run.sbatch
 To run program in apptainer, use: ./run.sh
 
