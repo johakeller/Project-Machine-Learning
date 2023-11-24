@@ -1,6 +1,6 @@
 Toxic Comment Classification - Usage
 
-Image pml.sif to be obtained from: https://drive.google.com/drive/folders/1bn9pdTxk2Ni_SX4jSMwuC5oHJwEyrIGT
+Image pml.sif to be obtained from: https://drive.google.com/file/d/14OY0eLTDKsIWZLcCUGUsiWxxkv_ljHUz/view?usp=sharing
 (exceed GitHub maximum size)
 
 To run program use: sbatch run.sbatch
