@@ -1,0 +1,6 @@
+Toxic Comment Classification - Usage
+
+To run program use: sbatch run.sbatch
+To run program in apptainer, use: ./run.sh
+
+Output files are saved in ./output_folder 
