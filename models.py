@@ -30,7 +30,7 @@ class BERTBase(nn.Module):
 
         Attributes:
             encoders (nn.ModuleList): List of BertLayer modules (encoders)
-        
+
         Methods:
             forward(x, mask): performs a forward pass through the encoder-pipeline
         """
@@ -327,86 +327,28 @@ class BERTBase(nn.Module):
             dropout (torch.nn.Dropout): Dropout layer
         """
 
-        class PositionEmbedding(torch.nn.Module):
-            """
-                Generates positional embeddings for input sequences.
-                The positional embeddings are created only once during initialization and are not updated during gradient descent.
-
-                Args:
-                    embed_size (int): Dimensionality of the embedding vector (default is EMBED_SIZE).
-                    seq_len (int): Length of the input sequence (default is SEQ_LEN).
-                
-                Methods:
-                    create_embedding_matrix(embed_size, seq_len): creates a positional embedding tensor
-
-            """
-
-            def create_embedding_matrix(self, embed_size, seq_len):
-                """
-                Creates a matrix that applies a positional embedding to the input.
-
-                Args:
-                    embed_size (int): Dimension of input vector
-                    seq_len (int): Length of the sequence
-
-                Returns:
-                    torch.Tensor: Matrix for positional embedding
-                """
-                embed_matrix = torch.zeros(
-                    seq_len, embed_size, device=DEVICE).float()
-
-                # positional encoding not to be updated during gradient descent
-                embed_matrix.requires_grad = False
-
-                # compute embedding for each position in input
-                for position in range(seq_len):
-                    embed_matrix[position, ::2] = torch.sin(
-                        position / (10000 ** (2 * torch.arange(0, embed_size, 2) / embed_size)))
-                    embed_matrix[position, 1::2] = torch.cos(
-                        position / (10000 ** (2 * torch.arange(0, embed_size, 2) / embed_size)))
-
-                return embed_matrix
-
-            def __init__(self, embed_size=EMBED_SIZE, seq_len=SEQ_LEN):
-                """
-                Initializes a positional embedding (PositionEmbedding module).
-                """
-                super().__init__()
-                self.pos_embedding = self.create_embedding_matrix(
-                    embed_size, seq_len)
-
-            def forward(self, x):
-                """
-                Forward pass for positional embedding. 
-
-                Args: 
-                    x (torch.Tensor): Input tensor
-
-                Returns:
-                    torch.Tensor: Positional embedding of the input
-                """
-                return self.pos_embedding
-
         def __init__(self):
             """
             Initializes the BertEmbedding for token, position, and segment embeddings of the raw input.
 
             Attributes:
                 token (nn.Embedding): Token embedding
-                position (PositionEmbedding): Positional embedding
+                position (nn.Embedding): Positional embedding
                 segment (nn.Embedding): Segment embedding
                 normlayer (nn.LayerNorm): Normalization layer
                 dropout (torch.nn.Dropout): Dropout layer
             """
             super().__init__()
-            # token embedding: transforms (vocabulary size, number of tokens) into (vocabulary size, number of tokens, length of embedding vector)
             self.token = nn.Embedding(VOCAB_SIZE, EMBED_SIZE, padding_idx=0).to(
                 DEVICE)  # padding remains 0 during training
-            # embedding of position
-            self.position = BERTBase.BertEmbedding.PositionEmbedding()
+            self.position = nn.Embedding(SEQ_LEN, EMBED_SIZE).to(DEVICE)
             self.segment = nn.Embedding(2, EMBED_SIZE, padding_idx=0)
             self.normlayer = nn.LayerNorm(EMBED_SIZE, eps=EPS)
             self.dropout = torch.nn.Dropout(p=DROPOUT)
+
+            # create token position tensor
+            self.token_pos = torch.tensor(
+                [i for i in range(SEQ_LEN)]).to(DEVICE)
 
         def forward(self, sequence, segments):
             """
@@ -421,7 +363,7 @@ class BERTBase(nn.Module):
             """
 
             total_embedding = self.token(
-                sequence) + self.position(sequence) + self.segment(segments)
+                sequence) + self.position(self.token_pos) + self.segment(segments)
             norm_embedding = self.normlayer(total_embedding)
             return self.dropout(norm_embedding)
 
@@ -443,24 +385,34 @@ class BERTBase(nn.Module):
 
     def load_from_pretrained(self):
         """
-        Method to load pretrained weights from https://huggingface.co/bert-base-uncased into the BERTBase model.
+        Method to load pretrained weights for the encoders, the token embedding and the segment embedding from https://huggingface.co/bert-base-uncased into the BERTBase model. 
+        To serve the purpose of Transfer learning, these weights remain frozen.
 
-        TODO: implement method
         """
-        pass
-        """
-        # download pretrained weights 
-        bert_base = "bert-base-uncased"
-        pretrained_model = BertModel.from_pretrained(bert_base)
 
-        # stack encoders and apply the pretrained weights to the layers of the encoders
-        self.encoders = torch.nn.ModuleList()  # create empty module list
+        # download pretrained weights
+        configuration = BertConfig.from_pretrained(BERT_BASE)
+        pretrained_model = BertModel.from_pretrained(
+            BERT_BASE, config=configuration)
+
+        # load_state_dict for encoders
         for i in range(NUMBER_LAYERS):
             pretrained_encoder = pretrained_model.encoder.layer[i].state_dict()
-            encoder = self.encoders[i]
-            encoder = encoder.load_state_dict(pretrained_encoder, strict=False)
-            self.encoders.insert(i,encoder)
-        """
+            self.encoder.encoders[i].load_state_dict(
+                pretrained_encoder, strict=False)
+
+        # load_state_dict tokenizer
+        self.embedding.token.load_state_dict(
+            pretrained_model.embeddings.word_embeddings.state_dict(), strict=False)
+        # load_state_dict for segment embedding
+        self.embedding.segment.load_state_dict(
+            pretrained_model.embeddings.token_type_embeddings.state_dict(), strict=False)
+        # load_state_dict for position embedding
+        self.embedding.position.load_state_dict(
+            pretrained_model.embeddings.position_embeddings.state_dict(), strict=False)
+        # load_state_dict for LayerNorm
+        self.embedding.normlayer.load_state_dict(
+            pretrained_model.embeddings.LayerNorm.state_dict(), strict=False)
 
     def forward(self, words):
         """
@@ -485,6 +437,8 @@ class BERTBase(nn.Module):
         return x
 
 # finetuning
+
+
 class BERTMultiLabelClassification(nn.Module):
     """
         Head for multi-label classification. Expects the usage of BCEWithLogits (no sigmoid layer).
@@ -521,7 +475,7 @@ class BERTMultiLabelClassification(nn.Module):
 
         return x
 
-# TASK SHEET: model class
+
 class Model(nn.Module):
 
     """
@@ -560,4 +514,3 @@ class Model(nn.Module):
         x = self.base_model(words)
 
         return self.toxic_comment(x)
-
