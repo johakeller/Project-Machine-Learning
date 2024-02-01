@@ -1,9 +1,7 @@
 Toxic Comment Classification - Usage
 
-Image pml.sif to be obtained from: https://drive.google.com/file/d/14OY0eLTDKsIWZLcCUGUsiWxxkv_ljHUz/view?usp=sharing
-(exceeds GitHub maximum size)
-
 To run program, use: sbatch run.sbatch
 To run program in apptainer, use: ./run.sh
+If explain-mode is required, change command paramater in run.sh to "explain, if training-mode is required, use "train" in the format: python main.py <train>/<explain>"
 
-Output files are saved in ./output_folder 
+Output files and input files are saved in ./output_folder 
