@@ -1,3 +1,4 @@
+import pickle
 from torch.utils.data import DataLoader
 import custom_datasets
 import models
@@ -69,10 +70,10 @@ def load_data(dataset: str, transformation=None, n_train: int = None, n_test: in
         raise NotImplementedError("Dataset not implemented")
 
 
-# Task sheet function: method: {"base", "slanted_discriminative"}
+method: {"base", "slanted_discriminative"}
 def train_apply(method="base", dataset="jigsaw_toxicity_pred"):
     """
-    TASK SHEET: Trains a BERT-based model for toxic comment classification with the specified learning rate scheduling method on a given dataset and performs model selection 
+    Trains a BERT-based model for toxic comment classification with the specified learning rate scheduling method on a given dataset and performs model selection 
     based on the given hyperparameters. It returns the validation results. The learning rate scheduler methods are "base", "slanted_discriminative".
 
     Args:
@@ -83,7 +84,6 @@ def train_apply(method="base", dataset="jigsaw_toxicity_pred"):
         tuple (labels, predictions, avg_loss, len_data): Validation results after training the model
     """
 
-    berti = models.Model()
 
     for batch_size in HYPER_PARAMS['batch_size']:
         train_loader, test_loader, val_loader = load_data(
@@ -91,6 +91,8 @@ def train_apply(method="base", dataset="jigsaw_toxicity_pred"):
         best_model = [None, 0, None]
 
         for learning_rate in HYPER_PARAMS['learning_rate']:
+            berti = models.Model()
+            
             # hyperparameter stats
             info = f"\nHyperparameters: batch size: {batch_size}, learning rate: {learning_rate}\n"
             print(info)
@@ -114,6 +116,11 @@ def train_apply(method="base", dataset="jigsaw_toxicity_pred"):
                 if auc_list[i] > best_model[1]:
                     # save: [model, auc value, hyperparameter info, epochs]
                     best_model = [berti, auc_list[i], info, i]
+    # save model
+    model_path = OUTPUT + '/model.pkl'
+    with open(model_path, 'wb') as file:  
+        pickle.dump(best_model[0], file)
+
     message = f'\nOptimal hyperparameters are: {best_model[2][:-1]}, epochs: {best_model[3]+1} with an avg. ROC-AUC of: {best_model[1]:.2f}\n'
     print(message)
 

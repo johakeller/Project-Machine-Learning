@@ -1,150 +1,47 @@
 import os
-import numpy as np
-from sklearn.metrics import roc_auc_score
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.lr_scheduler import StepLR
 from tqdm import tqdm
 
 from params import *
-
-
-def write_results(output, file):
-    """
-    Helper function that writes the output of the training/testing loop into a .txt file in the output_folder.
-
-    Args:
-        output (str): Message
-        file (str): File path
-    """
-    os.makedirs(OUTPUT, exist_ok=True)
-
-    with open(os.path.join(OUTPUT, f'{file}.txt'), "a") as file:
-        file.write(output)
-
-
-def shannon_entropy(labels, predictions):
-    """
-    Calculates the Shannon entropy, given the labels and the predictions (probabilities) of the model for one class. The Shannon entropy
-    is the measure of uncertainty in the given predictions. Note: a small constant is added to the predictions to avoid log(0).
-
-    Args: 
-        labels (numpy.ndarray): True labels
-        predictions (numpy.ndarray): Predicted probabilities of the model for one class
-
-    Returns:
-        float: Shannon entropy value of the predictions
-    """
-    sum = 0
-    entropy = 0
-    for i in range(labels.shape[0]):
-        if labels[i] == 1:
-            sum += 1
-            entropy += -(predictions[i]*np.log(predictions[i] + 1e-10))
-    if sum == 0:
-        return 0
-    return entropy/sum
-
-
-def calc_metrics(labels, predictions, loss, len_dataset, epoch=0):
-    """
-    Calculates various metrics based on passed true labels and predictions.
-
-    Args:
-        labels (torch.Tensor): True labels for the data
-        predictions (torch.Tensor): Predictions of the model for the same data
-        loss (float): summed loss per epoch
-        len_dataset (int): Length of the input dataset
-        epoch (int): Current epoch number (optional, default: 0)
-
-    Returns:
-        dict: dictionary containing all the computed metrics, which are: epoch, abg_loss, roc_auc, accuracy, TPR, FPR, TNR, FNR, toxic (ROC-AUC), severe_toxic (ROC-AUC), 
-        obscene (ROC-AUC), threat (ROC-AUC), insult (ROC-AUC), identity_hate (ROC-AUC), toxic_confidence (confidence score), severe_toxic_confidence (confidence score), 
-        obscene_confidence (confidence score), threat_confidence (confidence score), insult_confidence (confidence score), identity_hate_confidence (confidence score)
-    """
-    T, TN, TP, FP, FN, P, N = 0, 0, 0, 0, 0, 0, 0
-    total = 0
-
-    # COMPUTE METRICS
-    sigmoid = torch.nn.Sigmoid()
-    preds_sigmoid = sigmoid(predictions)
-    preds_th = torch.ge(preds_sigmoid, THRESHOLD).int()
-
-    T += (preds_th == labels).sum().item()
-    TP += ((preds_th == 1) & (labels == 1)).sum().item()
-    FP += ((preds_th == 1) & (labels == 0)).sum().item()
-    TN += ((preds_th == 0) & (labels == 0)).sum().item()
-    FN += ((preds_th == 0) & (labels == 1)).sum().item()
-    P += (labels == 1).sum().item()
-    N += (labels == 0).sum().item()
-
-    # sump up total number of labels in batch
-    total += labels.nelement()
-
-    labels = labels.cpu().numpy()
-    predictions = predictions.cpu().numpy()
-    preds_sigmoid = preds_sigmoid.cpu().numpy()
-
-    metrics = {
-        'epoch': epoch+1,
-        'avg_loss': loss / len_dataset,
-        'roc_auc': roc_auc_score(labels, predictions, average='macro', multi_class='ovr'),
-        'accuracy': T / total,
-        'TPR': TP/P,
-        'FPR': FP/(FP+TN),
-        'TNR': TN/N,
-        'FNR': FN/(FN+TP),
-        'toxic': roc_auc_score(np.array(labels)[:, 0], np.array(predictions)[:, 0], average='macro', multi_class='ovr'),
-        'severe_toxic': roc_auc_score(np.array(labels)[:, 1], np.array(predictions)[:, 1], average='macro', multi_class='ovr'),
-        'obscene': roc_auc_score(np.array(labels)[:, 2], np.array(predictions)[:, 2], average='macro', multi_class='ovr'),
-        'threat': roc_auc_score(np.array(labels)[:, 3], np.array(predictions)[:, 3], average='macro', multi_class='ovr'),
-        'insult': roc_auc_score(np.array(labels)[:, 4], np.array(predictions)[:, 4], average='macro', multi_class='ovr'),
-        'identity_hate': roc_auc_score(np.array(labels)[:, 5], np.array(predictions)[:, 5], average='macro', multi_class='ovr')
-    }
-
-    # calculate confidence per label
-    confidence_scores = {}
-    for i in range(labels.shape[1]):
-        confidence = 1.0 - shannon_entropy(labels[:, i], preds_sigmoid[:, i])
-        # key: e.g. toxic_confidence
-        label_name = ORDER_LABELS[i] + "_confidence"
-        confidence_scores[label_name] = confidence
-
-    metrics.update(confidence_scores)
-    return metrics
+from evaluation import *
 
 
 class SlantedLRScheduler(torch.optim.lr_scheduler._LRScheduler):
     """
-    Slanted triangular learning rate scheduler that increases the learning rate until eta_max for a 10000 steps and then decreases it again. 
+    Slanted triangular learning rate scheduler that increases the learning rate until eta_max for a given ratio and then decreases it again . 
     It can also optionally apply a layer-wise decay term on the learning rate (discriminative=True).
 
     Attributes:
         optimizer (torch.optim.Optimizer): Optimizer for which to define the learning rate
+        iterations (int): Number of iterations over which the learning rate has to be calculated 
         ratio (int): Change ratio for learning rate 
         eta_max (float, optional): Maximum learning rate 
-        cut (float, optional): Number of iterations at which the learning rate reaches the peak 
+        cut_frac (float, optional): Fraction of iteration at which the learning rate reaches the peak 
         last_epoch (int, optional): Index of the last epoch 
         decay (float): Decay term for optional discriminative layer-wise learning rate 
         discriminative (bool): Flag to apply discriminative layer 
     """
 
-    def __init__(self, optimizer, ratio=32, eta_max=1e-05, cut=WARMUP, last_epoch=-1, decay=DECAY, discriminative=True):
+    def __init__(self, optimizer, iterations, ratio=32, eta_max=1e-05, cut_frac=0.1, last_epoch=-1, decay=DECAY, discriminative=True):
         """
         Initializes the SLantedLRScheduler. 
 
         Args: 
             optimizer (torch.optim.Optimizer): Optimizer for which to define the learning rate
+            iterations (int): Number of iterations over which the learning rate has to be calculated (epochs*batches per epoch)
             ratio (int): Change ratio for learning rate (default: 32)
             eta_max (float, optional): Maximum learning rate (default: 1e-05)
-            cut (float, optional): Number of iteration at which the learning rate reaches the peak (default: 0.1)
+            cut_frac (float, optional): Fraction of iteration at which the learning rate reaches the peak (default: 0.1)
             last_epoch (int, optional): Index of the last epoch (default: -1)
             decay (float): Decay term for optional discriminative layer-wise learning rate (default: DECAY)
             discriminative (bool): Flag to apply discriminative layer (default: True)
         """
         self.eta_max = eta_max
-        self.cut = cut
+        self.cut = iterations * cut_frac
+        self.cut_frac = cut_frac
+        self.iterations = iterations
         self.ratio = ratio
         self.decay = decay
         self.t = last_epoch
@@ -164,7 +61,7 @@ class SlantedLRScheduler(torch.optim.lr_scheduler._LRScheduler):
             p = (self.t/self.cut)
         else:
             p = 1 - ((self.t - self.cut) /
-                     (self.cut * (1 / self.cut - 1)))
+                     (self.cut * (1 / self.cut_frac - 1)))
         learning_rate = self.eta_max * \
             ((1 + p * (self.ratio - 1)) / self.ratio)
         if not self.discriminative:
@@ -223,6 +120,10 @@ class TrainBERT:
         self.epochs = epochs
         self.training_data = train_dataloader
         self.testing_data = test_dataloader
+        if train_dataloader is None:
+            self.iterations = self.epochs*len(test_dataloader)
+        else:
+            self.iterations = self.epochs*len(train_dataloader)
 
         self.bar = None
         self.metrics = None
@@ -241,7 +142,7 @@ class TrainBERT:
 
             # lr scheduler
             self.scheduler = SlantedLRScheduler(
-                self.optimizer, eta_max=learning_rate, discriminative=True)
+                self.optimizer, self.iterations, eta_max=learning_rate, discriminative=True)
 
             self.criterion = nn.BCEWithLogitsLoss(
                 reduction="mean",
@@ -253,11 +154,11 @@ class TrainBERT:
 
             # optimizer: Adam
             self.optimizer = optim.Adam(
-                self.create_param_groups(), lr=learning_rate, weight_decay=0.01)
+                self.create_param_groups(), lr=learning_rate)
 
             # lr scheduler
             self.scheduler = SlantedLRScheduler(
-                self.optimizer, eta_max=learning_rate, discriminative=False)
+                self.optimizer, self.iterations, eta_max=learning_rate, discriminative=False)
 
             # loss function
             self.criterion = nn.BCEWithLogitsLoss(
@@ -375,7 +276,6 @@ class TrainBERT:
 
             # forward pass: comments trough model
             preds = self.model.forward(data['input'])
-            # /RESCALING_FACTOR # TODO ALSO CHANGE IN TEST VALIDATION
             loss = self.criterion(preds, labels)
             avg_loss += loss.item()
 
@@ -437,7 +337,6 @@ class TrainBERT:
                 # forward pass: comments through model
                 preds = self.model.forward(data['input'])
 
-                # //RESCALING_FACTOR # TODO
                 loss = self.criterion(preds, labels)
 
                 avg_loss += loss.item()

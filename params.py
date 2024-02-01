@@ -1,4 +1,5 @@
 import torch
+import os
 from transformers import BertTokenizer
 
 """
@@ -7,9 +8,10 @@ Configuration parameters:
     - Dataset path:
         TOXIC (str): Path of dataset
 
-    - Output directory:
+    - directories:
         OUTPUT (str): directory where output is saved
         BASE_TEST, BASE_TRAIN, SLANTED_TEST, SLANTED_TRAIN (str): Specific output directories for different training methods 
+        SAMPLES (str): directory for the test samples (.csv) for explaining
 
     - Run specific:
         METHOD (str): Training method ('bert_base', 'bert_discr_lr', 'bert_slanted_lr')
@@ -22,9 +24,7 @@ Configuration parameters:
         ORDER_LABELS (list): Order of the labels
         CLASS_WEIGHTS (dict): Weights for each class for loss function-balancing
         WEIGHTS_LIST (list): List of weights in the order of the labels
-        WARMUP (int): Number of warmup steps for slanted triangular learning rate scheduler
         DECAY (float): Decay factor for discriminative layer
-        RESCALING_FACTOR (float): average of class weights for class weight normalization (not in use)
         HYPER_PARAMS (dict): Hyper parameters for model selection
 
     - Model or tokenizer specific:
@@ -46,16 +46,17 @@ Configuration parameters:
 TOXIC = r"/home/space/datasets/toxic_comment/"  # cluster path
 # TOXIC = r"C:\Users\morit\OneDrive\UNI\Master\WS23\PML\repo\bert_from_scratch.toxic_comment\datasets\finetuning\kaggle-toxic_comment/" # Moritz
 
-# OUTPUT DIRECTORY DEFINITIONS
+# DIRECTORY DEFINITIONS
 OUTPUT = "output_folder"
-BASE_TEST = 'test_base'  
-BASE_TRAIN = 'train_base'  
-SLANTED_TEST = 'test_slanted_discriminative'  
-SLANTED_TRAIN = 'train_slanted_discriminative'  
+BASE_TEST = 'test_baseline'  
+BASE_TRAIN = 'train_baseline'  
+SLANTED_TEST = 'test_STDL'  
+SLANTED_TRAIN = 'train_STDL'  
+SAMPLES = os.path.join(OUTPUT, 'samples.csv')
 
 # RUN SPECIFIC
-METHOD = 'slanted_discriminative'  # "slanted_discriminative", 'base'
-TRAIN_LENGTH =159571
+METHOD = 'base'  # "slanted_discriminative", 'base'
+TRAIN_LENGTH = 159571
 TEST_LENGTH = 63978
 VAL_LENGTH = TEST_LENGTH//2
 NUM_CLASSES = 6
@@ -74,14 +75,11 @@ CLASS_WEIGHTS = {
     'identity_hate':  TRAIN_LENGTH/(1405*NUM_CLASSES)
 }
 WEIGHTS_LIST = [CLASS_WEIGHTS[key] for key in ORDER_LABELS]
-RESCALING_FACTOR = torch.tensor(
-    sum(CLASS_WEIGHTS.values())/len(CLASS_WEIGHTS.keys()), device=DEVICE) #TODO
-WARMUP = 10000
 DECAY = 0.95
 
 HYPER_PARAMS = {
     'batch_size': [16],
-    'learning_rate': [3e-5, 2e-5, 1e-5, 1e-6],
+    'learning_rate': [1e-5],
     'epochs': 4
 }
 

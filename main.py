@@ -1,13 +1,16 @@
-from params import *
-from train_apply import *
-from training import *
 import os
+import sys
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud, STOPWORDS
 import pandas as pd
 from transformers import BertTokenizer
+
+from params import *
+from train_apply import *
+from training import *
+from evaluation import *
 
 
 def generate_wordcloud(text, title, max_words=20):
@@ -34,7 +37,7 @@ def tokenize_text(text, tokenizer):
     Args: 
          text (str): Input text to be tokenized
          tokenizer: Tokenizer to be applied
-    
+
     Returns:
         int: Number of tokens obtained from input text after tokenization
     """
@@ -201,15 +204,21 @@ def show(csv_path, output_folder=None, graph_name=None):
         plt.show()
 
 
-def main():
+def main(mode):
     """
     Main function to load the data for toxic comment classification, set up a BERT model and run a training. 
 
-    - loads the dataset of specified length, batch size and transformations into a dataloader
-    - configures a BERT model by the standard parameters for vocabulary size, model dimension, pretrained BERT base model, number of encoders and number of attention heads per encoder
-    - the method chosen in params.py defines the method used for training and testing
-    - starts training the BERT model
-    - evaluates the parameters returned from the validation and writes them in the method-specific output file
+    - if mode is 'train':
+        - loads the dataset of specified length, batch size and transformations into a dataloader
+        - configures a BERT model by the standard parameters for vocabulary size, model dimension, pretrained BERT base model, number of encoders and number of attention heads per encoder
+        - the method chosen in params.py defines the method used for training and testing
+        - starts training the BERT model
+        - evaluates the parameters returned from the validation and writes them in the method-specific output file
+    -if mode is 'explain':
+        - performs Integrated Gradients on the samples, provided in SAMPLES
+
+    Args:
+        mode(str): if mode is 'train', a training procedure on the optimal hyperparameters is performed then a test and a validation, if mode is 'explain' Integrated Gradients is performed on the samples in SAMPLES
 
     Visualizations:
     - uncomment the visualization lines below to generate plots:
@@ -223,23 +232,33 @@ def main():
     # visualization of plots
     # show(TOXIC +'train.csv', graph_name="dstr_toxic")  # plots without saving
     # show((TOXIC +'train.csv'), output_folder=OUTPUT, graph_name="dstr_toxic")  # plots and saves in 'output_folder'
+    if mode == "train":
+        labels, predictions, avg_loss, len_data = train_apply(method=METHOD)
+        metrics = calc_metrics(
+            labels, predictions, avg_loss, len_data)
+        message = f"\nValidation\nAvg. testing loss: {metrics['avg_loss']:.2f}, avg. ROC-AUC: {metrics['roc_auc']:.2f}, Accuracy: {metrics['accuracy']:.2f}, TPR: {metrics['TPR']:.2f}, FPR: {metrics['FPR']:.2f}, TNR: {metrics['TNR']:.2f}, FNR: {metrics['FNR']:.2f}\n"
+        auc_classes = '\n'.join(
+            [f'ROC-AUC for {label}: {metrics[label]:.2f}'for label in ORDER_LABELS])
+        confidence_classes = '\n'.join([f'Average confidence: {metrics["average_confidence"]:.2f}'] +
+                                       [f'Confidence for {label}: {metrics[label + "_confidence"]:.2f}'for label in ORDER_LABELS])
+        message = message + auc_classes + '\n' + confidence_classes + '\n'
+        print(message)
 
-    labels, predictions, avg_loss, len_data = train_apply(method=METHOD)
-    metrics = calc_metrics(labels, predictions, avg_loss, len_data)
-    message = f"\nValidation\nAvg. testing loss: {metrics['avg_loss']:.2f}, avg. ROC-AUC: {metrics['roc_auc']:.2f}, Accuracy: {metrics['accuracy']:.2f}, TPR: {metrics['TPR']:.2f}, FPR: {metrics['FPR']:.2f}, TNR: {metrics['TNR']:.2f}, FNR: {metrics['FNR']:.2f}\n"
-    auc_classes = '\n'.join(
-        [f'ROC-AUC for {label}: {metrics[label]:.2f}'for label in ORDER_LABELS])
-    confidence_classes = '\n'.join(
-        [f'Confidence for {label}: {metrics[label + "_confidence"]:.2f}'for label in ORDER_LABELS])
-    message = message + auc_classes + '\n' + confidence_classes + '\n'
-    print(message)
+        # write results
+        if METHOD == 'slanted_discriminative':
+            write_results(message, SLANTED_TEST)
+        else:
+            write_results(message, BASE_TEST)
 
-    # write results
-    if METHOD == 'slanted_discriminative':
-        write_results(message, SLANTED_TEST)
-    else:
-        write_results(message, BASE_TEST)
+    elif mode == 'explain':
+        # explain samples
+        explain = Explainer()
+        explain. explain_samples(SAMPLES)
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) != 2 or (sys.argv[1] != 'train' and sys.argv[1] != 'explain'):
+        print('Usage: python main.py <train>/<explain>')
+        sys.exit(1)
+
+    main(sys.argv[1])
