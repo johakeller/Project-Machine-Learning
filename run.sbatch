@@ -6,6 +6,4 @@
 #SBATCH --output=./output_folder/output.txt
 #SBATCH --error=./output_folder/error.txt
 
-module load apptainer
-
 ./run.sh
