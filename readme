@@ -1,6 +1,6 @@
 Toxic Comment Classification - Usage
 
-The pml.sif and the output_folder must be obtained from https://drive.google.com/drive/folders/1bn9pdTxk2Ni_SX4jSMwuC5oHJwEyrIGT?usp=sharing since they are too large for GitHub. They have to be stored in the main directory. 
+The pml.sif and the output_folder (containing the model and input samples) must be obtained from https://drive.google.com/drive/folders/1bn9pdTxk2Ni_SX4jSMwuC5oHJwEyrIGT?usp=sharing since they are too large for GitHub. They have to be stored in the main directory. 
 
 To run program, use: sbatch run.sbatch
 To run program in apptainer, use: ./run.sh
