@@ -282,18 +282,17 @@ class Explainer:
             text (str): Input text
             **labels_and_values: Keyword arguments for the labels and their values
         """
-
         lig = LayerIntegratedGradients(self.model_output, self.model_input)
         label_to_index_mapping = {'toxic': 0, 'severe_toxic': 1,
                                   'obscene': 2, 'threat': 3, 'insult': 4, 'identity_hate': 5}
 
         visualizations = []
-
+        print(f'Comment text: {text}')
+              
         for label, value in labels_and_values.items():
-            # print(label)
-            # print(value)
+            print(f'Label: {label}, value: {value}')
             target_class_index = label_to_index_mapping[label]
-            # print(target_class_index)  # Using the mapping to get the index
+            print(f'Target class index: {target_class_index}')  # Using the mapping to get the index
             input_ids, baseline_input_ids, all_tokens = self.construct_input_and_baseline(
                 text)
             input_ids = input_ids.to(DEVICE)
@@ -304,6 +303,7 @@ class Explainer:
                                                 return_convergence_delta=True,
                                                 internal_batch_size=1)
             attributions_sum = self.summarize_attributions(attributions)
+            print(f'Attribution: {attributions_sum}')
 
             score_vis = viz.VisualizationDataRecord(
                 word_attributions=attributions_sum,
@@ -320,8 +320,8 @@ class Explainer:
 
             visualizations.append(score_vis)
 
-        output = viz.visualize_text(visualizations)
-        print(output)
+        print(viz.visualize_text(visualizations))
+
 
     def explain_samples(self, source_file):
         """
