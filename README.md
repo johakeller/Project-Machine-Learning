@@ -35,5 +35,6 @@ show((TOXIC + 'train.csv'), output_folder=OUTPUT, graph_name="dstr_toxic")  # pl
 ```
 ## Credits:
 Devlin, J., Chang, M.-W., Lee, K., & Toutanova, K. (2019). **BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding.** NAACL-HLT. https://aclanthology.org/N19-1423/
+
 Kaggle / Jigsaw (2017). **Toxic Comment Classification Challenge.** https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge
 
