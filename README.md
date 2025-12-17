@@ -35,27 +35,8 @@ show((TOXIC + 'train.csv'), output_folder=OUTPUT, graph_name="dstr_toxic")  # pl
 ```
 ## Credits:
 The BERT implementation is based on:
-```bibtex
-@inproceedings{devlin-etal-2019-bert,
-  title     = "{BERT}: Pre-training of Deep Bidirectional Transformers for Language Understanding",
-  author    = "Devlin, Jacob and Chang, Ming-Wei and Lee, Kenton and Toutanova, Kristina",
-  editor    = "Burstein, Jill and Doran, Christy and Solorio, Thamar",
-  booktitle = "Proceedings of the 2019 Conference of the North {A}merican Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers)",
-  month     = jun,
-  year      = "2019",
-  address   = "Minneapolis, Minnesota",
-  publisher = "Association for Computational Linguistics",
-  url       = "https://aclanthology.org/N19-1423/",
-  doi       = "10.18653/v1/N19-1423",
-  pages     = "4171--4186"
-}
+Devlin, J., Chang, M.-W., Lee, K., & Toutanova, K. (2019). **BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding.** NAACL-HLT. https://aclanthology.org/N19-1423/
 ```
 The Toxic Comment Classification dataset originates from:
-```bibtex
-@misc{kaggle-jigsaw-toxic-comment-classification-2017,
-  title        = {Jigsaw Toxic Comment Classification Challenge},
-  howpublished = {\url{https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge}},
-  year         = {2017},
-  note         = {Kaggle competition (accessed 2025-12-17)}
-}
-```
+Kaggle / Jigsaw (2017). **Toxic Comment Classification Challenge.** https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge
+
