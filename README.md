@@ -34,9 +34,6 @@ show(TOXIC + 'train.csv', graph_name="dstr_toxic")  # plots without saving
 show((TOXIC + 'train.csv'), output_folder=OUTPUT, graph_name="dstr_toxic")  # plots and saves in OUTPUT
 ```
 ## Credits:
-The BERT implementation is based on:
 Devlin, J., Chang, M.-W., Lee, K., & Toutanova, K. (2019). **BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding.** NAACL-HLT. https://aclanthology.org/N19-1423/
-
-The Toxic Comment Classification dataset originates from:
 Kaggle / Jigsaw (2017). **Toxic Comment Classification Challenge.** https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge
 
