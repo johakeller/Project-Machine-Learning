@@ -1,4 +1,5 @@
-# Toxic Comment Classification
+# Toxic Comment Classification with BERT
+![Toxic Comment Classification with BERT](docs/images/toxic_comment_word_clouds.png)
 Implementation of the BERT (Devlin et al., 2019) architecture, inlcuding the attention-mechanism, to classify toxic comments. The data comes from the 2017 Kaggle toxic comment classification challenge (https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge) (Jeffrey et al., 2017). It is a classification task, requiring to assign multiple labels for seven types of toxicity (including ”non-toxic”) to the comments.BERT was fine-tuned in the toxic comment classification downstream task; pretrained weights where used instead of a regular pretraining. 
 
 ## Run the program
