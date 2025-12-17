@@ -1,6 +1,8 @@
 # Toxic Comment Classification with BERT
 ![Toxic Comment Classification with BERT](docs/images/toxic_comment_word_clouds.png)
 *Word cloud visualizations (frequency-based) of non-toxic comments (left) and toxic comments (right) in the Toxic Comment Classifiation dataset.*
+
+
 Implementation of the BERT (Devlin et al., 2019) architecture, inlcuding the attention-mechanism, to classify toxic comments. The data comes from the 2017 Kaggle toxic comment classification challenge (https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge) (Jeffrey et al., 2017). It is a classification task, requiring to assign multiple labels for seven types of toxicity (including ”non-toxic”) to the comments.BERT was fine-tuned in the toxic comment classification downstream task; pretrained weights where used instead of a regular pretraining. 
 
 ## Run the program
@@ -35,7 +37,7 @@ In `main.py` uncomment the desired lines, for instance:
 show(TOXIC + 'train.csv', graph_name="dstr_toxic")  # plots without saving
 show((TOXIC + 'train.csv'), output_folder=OUTPUT, graph_name="dstr_toxic")  # plots and saves in OUTPUT
 ```
-## Credits:
+## Credits
 Devlin, J., Chang, M.-W., Lee, K., & Toutanova, K. (2019). **BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding.** NAACL-HLT. https://aclanthology.org/N19-1423/
 
 Kaggle / Jigsaw (2017). **Toxic Comment Classification Challenge.** https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge
