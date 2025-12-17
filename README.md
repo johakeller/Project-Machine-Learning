@@ -31,7 +31,7 @@ Implementation of the **BERT** (Devlin et al., 2019) architecture, inlcuding the
 5.  Output
     Results are written to the specified `OUTPUT` directory.
 
-## Optional: Generate plots
+## Optional: generate plots
 In `main.py` uncomment the desired lines, for instance:
 ```python
 show(TOXIC + 'train.csv', graph_name="dstr_toxic")  # plots without saving
