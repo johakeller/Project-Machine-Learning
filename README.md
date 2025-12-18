@@ -1,8 +1,4 @@
 # Toxic Comment Classification with BERT
-![Toxic Comment Classification with BERT](docs/images/toxic_comment_word_clouds.png)
-*Word cloud visualizations (frequency-based) of non-toxic comments (left) and toxic comments (right) in the Toxic Comment Classifiation dataset.*
-
-
 Implementation of the **BERT** (Devlin et al., 2019) architecture, inlcuding the attention-mechanism, to classify toxic comments. The data comes from the 2017 Kaggle **Toxic Comment Classification Challenge** (https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge) (Jeffrey et al., 2017). It is a classification task, requiring to assign multiple labels for seven types of toxicity (including ”non-toxic”) to the comments.BERT was fine-tuned in the toxic comment classification downstream task; pretrained weights where used instead of a regular pretraining. 
 
 ## Run the program
@@ -25,6 +21,9 @@ Implementation of the **BERT** (Devlin et al., 2019) architecture, inlcuding the
     python main.py train
     ```
     **XAI (Integrated Gradients) on samples in `SAMPLES`**
+    ![Toxic Comment Classification with BERT](docs/images/toxic_comment_word_clouds.png)
+    *Integrated Gradients evaluation of sample labeled 'toxic'.*
+    
     ```bash
     python main.py explain
     ```
