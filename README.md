@@ -21,7 +21,7 @@ Implementation of the **BERT** (Devlin et al., 2019) architecture, inlcuding the
     python main.py train
     ```
     **XAI (Integrated Gradients) on samples in `SAMPLES`**
-    ![Toxic Comment Classification with BERT](docs/images/toxic_comment_word_clouds.png)
+    ![Toxic Comment Classification with BERT](docs/images/toxic_comment_XAI.png)
     *Integrated Gradients evaluation of sample labeled 'toxic'.*
     
     ```bash
