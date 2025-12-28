@@ -1,18 +1,18 @@
 # Toxic Comment Classification with BERT
-Implementation of the **BERT** (Devlin et al., 2019) architecture, inlcuding the attention-mechanism, to classify toxic comments. The data comes from the 2017 Kaggle **Toxic Comment Classification Challenge** (https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge) (Jeffrey et al., 2017). It is a classification task, requiring to assign multiple labels for seven types of toxicity (including ”non-toxic”) to the comments.BERT was fine-tuned in the toxic comment classification downstream task; pretrained weights where used instead of a regular pretraining. 
+Implementation of the **BERT** (Devlin et al., 2019) architecture, including the attention mechanism, to classify toxic comments. The data comes from the 2017 Kaggle **Toxic Comment Classification Challenge** (https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge) (Jeffrey et al., 2017). It is a classification task, requiring to assign multiple labels for seven types of toxicity (including "non-toxic") to the comments. BERT was fine-tuned in the toxic comment classification downstream task; pretrained weights were used instead of a regular pretraining. 
 
 ## Run the program
 1.  Create virtual environment and activate it:
     ```bash
     python3 -m venv .venv
     source .venv/bin/activate
-    pip install -U pip
+    python -m pip install -U pip
     ```
 2.  Install dependencies:
     ```bash
     pip install -r requirements.txt
     ```
-3.  Ensure dataset path `TOXIC` is configures in `params.py` and is pointing to the folder containing the CSV-files.
+3.  Ensure dataset path `TOXIC` is configured in `params.py` and points to the folder containing the CSV files.
     Set `OUTPUT` as needed. Set the learning rate scheduling in `METHOD` and the rest of the hyperparameters in `params.py`.
 4.  Run:
 
@@ -22,7 +22,7 @@ Implementation of the **BERT** (Devlin et al., 2019) architecture, inlcuding the
     ```
     **XAI (Integrated Gradients) on samples in `SAMPLES`**
     ![Toxic Comment Classification with BERT](docs/images/toxic_comment_XAI.png)
-    *Integrated Gradients evaluation of sample labeled 'toxic'.*
+    *Integrated Gradients evaluation of sample labeled "toxic".*
     
     ```bash
     python main.py explain
